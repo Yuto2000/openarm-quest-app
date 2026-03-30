@@ -14,6 +14,8 @@ public class Quest2ROSController : MonoBehaviour
     [SerializeField] InputActionReference leftRotation;
     [SerializeField] InputActionReference rightGrip;
     [SerializeField] InputActionReference rightTrigger;
+    [SerializeField] InputActionReference leftGrip;
+    [SerializeField] InputActionReference leftTrigger;
 
     ROSConnection ros;
     float publishInterval = 0.05f;
@@ -29,6 +31,8 @@ public class Quest2ROSController : MonoBehaviour
         leftRotation?.action?.Enable();
         rightGrip?.action?.Enable();
         rightTrigger?.action?.Enable();
+        leftGrip?.action?.Enable();
+        leftTrigger?.action?.Enable();
     }
 
     void Start()
@@ -38,6 +42,8 @@ public class Quest2ROSController : MonoBehaviour
         ros.RegisterPublisher<PoseStampedMsg>("/q2r_left_hand_pose");
         ros.RegisterPublisher<BoolMsg>("/q2r_right_grip_pressed");
         ros.RegisterPublisher<RosMessageTypes.Std.Float32Msg>("/q2r_right_trigger_value");
+        ros.RegisterPublisher<BoolMsg>("/q2r_left_grip_pressed");
+        ros.RegisterPublisher<RosMessageTypes.Std.Float32Msg>("/q2r_left_trigger_value");
         StartCoroutine(DelayedStart());
     }
 
@@ -76,6 +82,15 @@ public class Quest2ROSController : MonoBehaviour
         // Trigger value for gripper control (0.0 = open, 1.0 = closed)
         float triggerValue = rightTrigger?.action?.ReadValue<float>() ?? 0f;
         ros.Publish("/q2r_right_trigger_value", new RosMessageTypes.Std.Float32Msg(triggerValue));
+
+        // Left grip
+        float leftGripValue = leftGrip?.action?.ReadValue<float>() ?? 0f;
+        bool leftGripPressed = leftGripValue > 0.5f;
+        ros.Publish("/q2r_left_grip_pressed", new BoolMsg(leftGripPressed));
+
+        // Left trigger
+        float leftTriggerValue = leftTrigger?.action?.ReadValue<float>() ?? 0f;
+        ros.Publish("/q2r_left_trigger_value", new RosMessageTypes.Std.Float32Msg(leftTriggerValue));
 
         if (rp != Vector3.zero || rr != Quaternion.identity)
         {
